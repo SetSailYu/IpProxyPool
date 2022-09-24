@@ -1,0 +1,12 @@
+D:\Project\IpProxyPool\ProxyPool.Common\bin\Debug\net6.0\ProxyPool.Common.deps.json
+D:\Project\IpProxyPool\ProxyPool.Common\bin\Debug\net6.0\ProxyPool.Common.dll
+D:\Project\IpProxyPool\ProxyPool.Common\bin\Debug\net6.0\ProxyPool.Common.pdb
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.csproj.AssemblyReference.cache
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.AssemblyInfoInputs.cache
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.AssemblyInfo.cs
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.csproj.CoreCompileInputs.cache
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.dll
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\refint\ProxyPool.Common.dll
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ProxyPool.Common.pdb
+D:\Project\IpProxyPool\ProxyPool.Common\obj\Debug\net6.0\ref\ProxyPool.Common.dll

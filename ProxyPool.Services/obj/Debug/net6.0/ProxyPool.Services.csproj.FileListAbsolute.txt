@@ -1,0 +1,17 @@
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Services.deps.json
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Services.dll
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Services.pdb
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.csproj.AssemblyReference.cache
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.AssemblyInfoInputs.cache
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.AssemblyInfo.cs
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.csproj.CoreCompileInputs.cache
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.dll
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\refint\ProxyPool.Services.dll
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.pdb
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ref\ProxyPool.Services.dll
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Common.dll
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Repository.dll
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Repository.pdb
+D:\Project\IpProxyPool\ProxyPool.Services\bin\Debug\net6.0\ProxyPool.Common.pdb
+D:\Project\IpProxyPool\ProxyPool.Services\obj\Debug\net6.0\ProxyPool.Services.csproj.CopyComplete
