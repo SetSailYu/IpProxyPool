@@ -22,7 +22,17 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 获取全部代理列表
+        /// 获取首个爬取器
+        /// </summary>
+        /// <returns></returns>
+        public Fetchers GetFirst()
+        {
+            var result = _db.Set<Fetchers>().FirstOrDefault();
+            return result;
+        }
+
+        /// <summary>
+        /// 获取全部爬取器列表
         /// </summary>
         /// <returns></returns>
         public async Task<List<Fetchers>> GetAsync()
@@ -32,7 +42,7 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 获取分页代理列表
+        /// 获取分页爬取器列表
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>

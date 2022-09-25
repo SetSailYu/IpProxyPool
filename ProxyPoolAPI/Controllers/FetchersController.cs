@@ -2,7 +2,7 @@
 using ProxyPool.Common;
 using ProxyPool.Repository.Entity;
 using ProxyPool.Services;
-using ProxyPoolAPI.DB;
+using ProxyPoolAPI.PgDB;
 using ProxyPoolAPI.Repository;
 using System.ComponentModel.Design;
 

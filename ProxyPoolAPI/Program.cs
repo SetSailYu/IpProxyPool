@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using ProxyPool.Common;
 using ProxyPool.Common.Helpers;
+using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Enum;
-using ProxyPoolAPI.DB;
 using ProxyPoolAPI.Repository;
+using ProxyPoolAPI.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,19 @@ builder.Services.AddAutoMapper(profileAssemblies, ServiceLifetime.Singleton);
 // ¿çÓò
 builder.Services.AddProxyPoolCors();
 
+ConsoleHelper.WriteSuccessLog("Task ========>");
+
+List<ITaskService> services = new List<ITaskService>()
+{
+    new FetcherTaskService(builder.Services.BuildServiceProvider().GetService<DB>())
+};
+
+foreach (var serv in services)
+{
+    System.Threading.Tasks.Task.Run(serv.Execute);
+}
+
+ConsoleHelper.WriteSuccessLog("Build ========>");
 
 var app = builder.Build();
 

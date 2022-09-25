@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ProxyPoolAPI.DB;
+using ProxyPoolAPI.PgDB;
 using ProxyPoolAPI.Repository;
 
 namespace ProxyPoolAPI.Controllers

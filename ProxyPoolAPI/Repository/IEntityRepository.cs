@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ProxyPoolAPI.DB;
+using ProxyPoolAPI.PgDB;
 using ProxyPoolAPI.Entity;
 
 namespace ProxyPoolAPI.Repository
