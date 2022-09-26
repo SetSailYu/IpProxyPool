@@ -12,7 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class ProxyPoolWebApplicationBuilderExtensions
 {
     /// <summary>
-    /// 基本能力配置
+    /// 基本能力配置   
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
@@ -21,7 +21,6 @@ public static class ProxyPoolWebApplicationBuilderExtensions
         // 配置
         var configuration = builder.Configuration;
         AppSettingsConfig.Configure(configuration);
-
 
 
         return builder;

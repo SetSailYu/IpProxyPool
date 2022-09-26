@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Entity;
+using ProxyPool.Services.Models;
 
 namespace ProxyPool.Services
 {
@@ -17,10 +18,24 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
+        /// 获取全部代理状态
+        /// </summary>
+        /// <returns></returns>
+        public ProxiesStatusModel GetAllProxiesStatus()
+        {
+            ProxiesStatusModel result = new ProxiesStatusModel();
+            var res = _db.Set<Proxies>().ToList();
+            result.AllCount = res.Count;
+            result.PassCount = res.Where(w => w.Validated == true).Count();
+            result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTime.Now).Count();
+            return result;
+        }
+
+        /// <summary>
         /// 获取全部代理列表
         /// </summary>
         /// <returns></returns>
-        public async Task<List<Proxies>> GetAsync()
+        public async Task<List<Proxies>> GetAllAsync()
         {
             var result = await _db.Set<Proxies>().ToListAsync();
             return result;

@@ -35,6 +35,16 @@ namespace ProxyPool.Services
         /// 获取全部爬取器列表
         /// </summary>
         /// <returns></returns>
+        public List<Fetchers> GetList()
+        {
+            var result = _db.Set<Fetchers>().ToList();
+            return result;
+        }
+
+        /// <summary>
+        /// 获取全部爬取器列表
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<Fetchers>> GetAsync()
         {
             var result = await _db.Set<Fetchers>().ToListAsync();

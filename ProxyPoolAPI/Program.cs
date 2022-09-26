@@ -3,7 +3,7 @@ using ProxyPool.Common;
 using ProxyPool.Common.Helpers;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Enum;
-using ProxyPoolAPI.Repository;
+using ProxyPool.Services.BackgroundTasks;
 using ProxyPoolAPI.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,19 +53,22 @@ builder.Services.AddAutoMapper(profileAssemblies, ServiceLifetime.Singleton);
 // ¿çÓò
 builder.Services.AddProxyPoolCors();
 
-ConsoleHelper.WriteSuccessLog("Task ========>");
+// ÅÀÈ¡Æ÷ÈÎÎñ
+builder.Services.AddHostedService<FetcherTask>();
 
-List<ITaskService> services = new List<ITaskService>()
-{
-    new FetcherTaskService(builder.Services.BuildServiceProvider().GetService<DB>())
-};
+//ConsoleHelper.WriteSuccessLog("Task ========>");
 
-foreach (var serv in services)
-{
-    System.Threading.Tasks.Task.Run(serv.Execute);
-}
+//List<ITaskService> services = new List<ITaskService>()
+//{
+//    new FetcherTaskService(builder.Services.BuildServiceProvider().GetService<DB>())
+//};
 
-ConsoleHelper.WriteSuccessLog("Build ========>");
+//foreach (var serv in services)
+//{
+//    System.Threading.Tasks.Task.Run(serv.Execute);
+//}
+
+//ConsoleHelper.WriteSuccessLog("Build ========>");
 
 var app = builder.Build();
 

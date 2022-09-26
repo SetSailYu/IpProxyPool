@@ -2,8 +2,6 @@
 using ProxyPool.Common;
 using ProxyPool.Repository.Entity;
 using ProxyPool.Services;
-using ProxyPoolAPI.PgDB;
-using ProxyPoolAPI.Repository;
 using System.ComponentModel.Design;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
