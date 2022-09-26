@@ -15,7 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ProxyPool.Services.BackgroundTasks
+namespace ProxyPool.Services.Tasks
 {
     /// <summary>
     /// 【爬取器】后台任务

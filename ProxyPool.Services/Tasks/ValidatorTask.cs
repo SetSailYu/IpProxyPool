@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProxyPool.Services.BackgroundTasks
+namespace ProxyPool.Services.Tasks
 {
     /// <summary>
     /// 【验证器】后台任务
@@ -21,6 +21,11 @@ namespace ProxyPool.Services.BackgroundTasks
         private readonly DB _db;
         private readonly FetchersService _fetchersService;
         private readonly ProxiesService _proxiesService;
+
+        const int cycleNum = 10;
+        static int cnt = 10;
+        static AutoResetEvent myEvent = new AutoResetEvent(false);
+
         public ValidatorTask(IServiceScopeFactory scopeFactory)
         {
             var scope = scopeFactory.CreateScope();
@@ -35,30 +40,59 @@ namespace ProxyPool.Services.BackgroundTasks
             //  将代理发送给前面创建的线程
             ConsoleHelper.WriteSuccessLog("【验证器】循环 ====>");
 
-
+            
+            ThreadPool.SetMinThreads(1, 1);
+            ThreadPool.SetMaxThreads(100, 100);
+            for (int i = 1; i <= cycleNum; i++)
+            {
+                ThreadPool.QueueUserWorkItem(new WaitCallback(testFun), i.ToString());
+            }
+            Console.WriteLine("主线程执行！");
+            Console.WriteLine("主线程结束！");
+            myEvent.WaitOne();
+            Console.WriteLine("线程池终止！");
+            Console.ReadKey();
 
             return 2; //返回2秒间隔循环
         }
 
-        public bool ValidateProxy()
+        public static void testFun(object obj)
+        {
+            cnt -= 1;
+            Console.WriteLine(string.Format("{0}:第{1}个线程", DateTime.Now.ToString(), obj.ToString()));
+            Thread.Sleep(5000);
+            if (cnt == 0)
+            {
+                myEvent.Set();
+            }
+        }
+
+        /// <summary>
+        /// 验证代理
+        /// </summary>
+        /// <returns></returns>
+        public bool ValidateProxy(string host, int port)
         {
             RetrySettings settings = new RetrySettings()
             {
                 MaximumNumberOfAttempts = 3,
-                AssignProxyIp = new WebProxy()
+                AssignProxyIp = new WebProxy(host, port)
             };
             AlgorithmDTO dto = new AlgorithmDTO()
             {
-                Url = $"",
+                Url = $"https://baidu.com",
             };
             string result = Retry.Function(proxy =>
             {
                 var res = SpiderBase.GetStreamStr(dto, proxy);
                 return res;
-
             }, settings);
 
-            return true;
+            if (!string.IsNullOrEmpty(result) && result.Contains("百度搜索"))
+            {
+                return true;
+            }
+            return false;
         }
 
     }

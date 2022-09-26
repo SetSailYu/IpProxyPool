@@ -3,8 +3,7 @@ using ProxyPool.Common;
 using ProxyPool.Common.Helpers;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Enum;
-using ProxyPool.Services.BackgroundTasks;
-using ProxyPoolAPI.Tasks;
+using ProxyPool.Services.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
