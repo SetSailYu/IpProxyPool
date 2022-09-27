@@ -7,6 +7,7 @@ using ProxyPool.Services.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
@@ -27,8 +28,14 @@ namespace ProxyPool.Services.Tasks
         /// 验证结果队列
         /// </summary>
         private static ConcurrentQueue<ProxiesQueueModel> _resultQue = new ConcurrentQueue<ProxiesQueueModel>();
-        static int cnt = 10;
-        static AutoResetEvent myEvent = new AutoResetEvent(false);
+        /// <summary>
+        /// 当前验证记录列表
+        /// </summary>
+        private static List<Guid> _verifyList = new List<Guid>();
+        /// <summary>
+        /// 验证线程数量配置
+        /// </summary>
+        private const int VALIDATE_THREAD_NUM = 200;
 
         public ValidatorTask(IServiceScopeFactory scopeFactory)
         {
@@ -37,61 +44,71 @@ namespace ProxyPool.Services.Tasks
             _fetchersService = new FetchersService(_db);
             _proxiesService = new ProxiesService(_db);
             ThreadPool.SetMinThreads(2, 2);
-            ThreadPool.SetMaxThreads(100, 100);
+            ThreadPool.SetMaxThreads(100, 100); //最高并发数
         }
         protected override double DoTask(object state)
         {
-            //  从数据库中获取若干当前待验证的代理
-            //  将代理发送给前面创建的线程
-            ConsoleHelper.WriteSuccessLog("【验证器】循环 ====>");
+            ConsoleHelper.WriteSuccessLog($"【验证器】循环 ====>");
 
-            //  检查验证线程是否返回了代理的验证结果
+            // --> 检查验证线程是否返回了代理的验证结果
             int out_cnt = 0;
             while (!_resultQue.IsEmpty)
             {
                 ProxiesQueueModel model = new ProxiesQueueModel();
                 if (_resultQue.TryDequeue(out model))
                 {
-                    ConsoleHelper.WriteSuccessLog($"弹出结果队列：{model.Ip}");
+                    ConsoleHelper.WriteSuccessLog($"【{model.Port}】弹出结果队列：{model.Ip}");
+                    _verifyList.Remove(model.Id);//弹出记录列表
                     out_cnt++;
                 }
             }
-            ConsoleHelper.WriteHintLog($"完成了 {out_cnt} 个代理验证");
+            ConsoleHelper.WriteSuccessLog($"完成了 {out_cnt} 个代理验证");
 
-            //  如果正在进行验证的代理足够多，那么就不着急添加新代理
-            //if ()
-            //{
+            // --> 如果正在进行验证的代理足够多，那么就不着急添加新代理
+            if (_verifyList.Count >= VALIDATE_THREAD_NUM * 2)
+            {
+                return 5; //返回5秒间隔循环
+            }
 
-            //}
+            // --> 从数据库中获取若干当前待验证的代理装填进线程池
+            List<ProxiesQueueModel> proxiesQueues = _proxiesService.GetProxiesQueue(VALIDATE_THREAD_NUM);
+            foreach (ProxiesQueueModel proxy in proxiesQueues)
+            {
+                bool join = ThreadPool.QueueUserWorkItem(new WaitCallback(VerifyThreadFun), proxy);
+                if (join)
+                {
+                    _verifyList.Add(proxy.Id); //加入记录列表
+                    _proxiesService.UpdateProxyVerifyState(proxy.Id, 1);
+                }
+            }
 
-            //for (int i = 1; i <= cycleNum; i++)
-            //{
-            //    ThreadPool.QueueUserWorkItem(new WaitCallback(testFun), i.ToString());
-            //}
-            Console.WriteLine("主线程执行！");
-            Console.WriteLine("主线程结束！");
-            myEvent.WaitOne();
-            Console.WriteLine("线程池终止！");
-            Console.ReadKey();
-
-            return 2; //返回2秒间隔循环
+            ConsoleHelper.WriteHintLog($"本轮结束休息5秒");
+            return 5; //返回5秒间隔循环
         }
 
-        public static void testFun(object obj)
+        /// <summary>
+        /// 验证线程方法
+        /// </summary>
+        /// <param name="model"></param>
+        public void VerifyThreadFun(object model)
         {
-            cnt -= 1;
-            Console.WriteLine(string.Format("{0}:第{1}个线程", DateTime.Now.ToString(), obj.ToString()));
-            Thread.Sleep(5000);
-            if (cnt == 0)
-            {
-                myEvent.Set();
-            }
+            ProxiesQueueModel item = (ProxiesQueueModel)model;
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            bool success = ValidateProxy(item.Ip, item.Port);
+            sw.Stop();
+            TimeSpan ts = sw.Elapsed;
+
+            _resultQue.Enqueue(Validate(item, success, Convert.ToInt32(ts.TotalMilliseconds))); //添加验证结果
         }
 
         /// <summary>
         /// 验证代理
         /// </summary>
-        /// <returns></returns>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <returns>成功true/失败false</returns>
         public bool ValidateProxy(string host, int port)
         {
             RetrySettings settings = new RetrySettings()
@@ -115,6 +132,40 @@ namespace ProxyPool.Services.Tasks
             }
             return false;
         }
+
+        /// <summary>
+        /// 验证结果
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="success"></param>
+        /// <param name="latency"></param>
+        /// <returns></returns>
+        public ProxiesQueueModel Validate(ProxiesQueueModel model, bool success, int latency)
+        {
+            if (success)
+            {
+                model.Success = true;
+                model.Latency = latency;
+                model.ValidateDate = DateTime.Now;
+                model.ValidateFailedCnt = 0;
+                model.ToValidateDate = DateTime.Now.AddMinutes(10); //10分钟之后继续验证
+            }
+            else
+            {
+                model.Success = false;
+                model.Latency = latency;
+                model.ValidateDate = DateTime.Now;
+                model.ValidateFailedCnt++;
+                model.ToValidateDate = DateTime.Now.AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
+                if (model.ValidateFailedCnt >= 6)
+                {
+                    model.Delete = true; //失败太多次，进行删除
+                }
+            }
+            return model;
+        }
+
+
 
     }
 }

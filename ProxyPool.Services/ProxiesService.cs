@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ProxyPool.Common;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Entity;
 using ProxyPool.Services.Models;
@@ -30,6 +31,59 @@ namespace ProxyPool.Services
             result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTime.Now).Count();
             return result;
         }
+
+        /// <summary>
+        /// 获取待验证的代理
+        /// </summary>
+        /// <param name="maxCount">返回数量限制</param>
+        /// <returns></returns>
+        public List<ProxiesQueueModel> GetProxiesQueue(int maxCount)
+        {
+            var query = _db.Set<Proxies>()
+                .Where(w => w.ToValidateDate <= DateTime.Now && w.VerifyState == 0)
+                .OrderByDescending(o => o.Validated).OrderBy(o => o.ToValidateDate)
+                .Select(s => new ProxiesQueueModel
+                {
+                    Id = s.Id,
+                    Ip = s.Ip,
+                    Port = s.Port,
+                    Success = false,
+                    ValidateFailedCnt = s.ValidateFailedCnt,
+                    Delete = false
+                }).ToList();
+            if (maxCount > 0)
+            {
+                query = query.Take(maxCount).ToList();
+            }
+            return query;
+        }
+
+        /// <summary>
+        /// 更新代理的验证状态
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="verifyState">验证状态 （1验证中，0待验证） 默认0</param>
+        /// <returns></returns>
+        public bool UpdateProxyVerifyState(Guid id, int verifyState)
+        {
+            var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == id);
+            if (proxy == null)
+            {
+                //ConsoleHelper.WriteErrorLog("找不到代理，更新失败");
+                return false;
+            }
+            proxy.VerifyState = verifyState;
+            _db.Update(proxy);
+            int ret = _db.SaveChanges();
+
+            if (ret == 0)
+            {
+                //ConsoleHelper.WriteErrorLog("更新记录数为0");
+                return false;
+            }
+            return true;
+        }
+
 
         /// <summary>
         /// 获取全部代理列表
