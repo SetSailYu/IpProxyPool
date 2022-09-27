@@ -2,8 +2,10 @@
 using ProxyPool.Common;
 using ProxyPool.Common.Base;
 using ProxyPool.Repository.Base;
+using ProxyPool.Services.Models;
 using ProxyPool.Services.Utilities;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -21,8 +23,10 @@ namespace ProxyPool.Services.Tasks
         private readonly DB _db;
         private readonly FetchersService _fetchersService;
         private readonly ProxiesService _proxiesService;
-
-        const int cycleNum = 10;
+        /// <summary>
+        /// 验证结果队列
+        /// </summary>
+        private static ConcurrentQueue<ProxiesQueueModel> _resultQue = new ConcurrentQueue<ProxiesQueueModel>();
         static int cnt = 10;
         static AutoResetEvent myEvent = new AutoResetEvent(false);
 
@@ -32,21 +36,38 @@ namespace ProxyPool.Services.Tasks
             _db = scope.ServiceProvider.GetRequiredService<DB>();
             _fetchersService = new FetchersService(_db);
             _proxiesService = new ProxiesService(_db);
+            ThreadPool.SetMinThreads(2, 2);
+            ThreadPool.SetMaxThreads(100, 100);
         }
         protected override double DoTask(object state)
         {
-            //  检查验证线程是否返回了代理的验证结果
             //  从数据库中获取若干当前待验证的代理
             //  将代理发送给前面创建的线程
             ConsoleHelper.WriteSuccessLog("【验证器】循环 ====>");
 
-            
-            ThreadPool.SetMinThreads(1, 1);
-            ThreadPool.SetMaxThreads(100, 100);
-            for (int i = 1; i <= cycleNum; i++)
+            //  检查验证线程是否返回了代理的验证结果
+            int out_cnt = 0;
+            while (!_resultQue.IsEmpty)
             {
-                ThreadPool.QueueUserWorkItem(new WaitCallback(testFun), i.ToString());
+                ProxiesQueueModel model = new ProxiesQueueModel();
+                if (_resultQue.TryDequeue(out model))
+                {
+                    ConsoleHelper.WriteSuccessLog($"弹出结果队列：{model.Ip}");
+                    out_cnt++;
+                }
             }
+            ConsoleHelper.WriteHintLog($"完成了 {out_cnt} 个代理验证");
+
+            //  如果正在进行验证的代理足够多，那么就不着急添加新代理
+            //if ()
+            //{
+
+            //}
+
+            //for (int i = 1; i <= cycleNum; i++)
+            //{
+            //    ThreadPool.QueueUserWorkItem(new WaitCallback(testFun), i.ToString());
+            //}
             Console.WriteLine("主线程执行！");
             Console.WriteLine("主线程结束！");
             myEvent.WaitOne();

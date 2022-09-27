@@ -64,5 +64,10 @@ namespace ProxyPool.Repository.Entity
         /// </summary>
         [Column("validate_failed_cnt")]
         public int ValidateFailedCnt { get; set; }
+        /// <summary>
+        /// 验证状态 （1验证中，0待验证） 默认0
+        /// </summary>
+        [Column("verify_state")]
+        public int VerifyState { get; set; }
     }
 }
