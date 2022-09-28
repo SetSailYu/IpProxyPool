@@ -259,7 +259,7 @@ namespace ProxyPool.Repository.Base
             // 其他字段自动赋值
             if (entry.Entity is ICreatedTime createdTime)
             {
-                createdTime.CreatedTime = DateTime.Now;
+                createdTime.CreatedTime = DateTimeNow.Local;
             }
             //if (entry.Entity is ICreatedUser createdUser)
             //{
@@ -272,7 +272,7 @@ namespace ProxyPool.Repository.Base
             // 字段自动赋值
             if (entry.Entity is IUpdatedTime updatedTime)
             {
-                updatedTime.UpdatedTime = DateTime.Now;
+                updatedTime.UpdatedTime = DateTimeNow.Local;
             }
             //if (entry.Entity is IUpdatedUser updatedUser)
             //{

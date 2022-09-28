@@ -73,6 +73,10 @@ builder.Services.AddHostedService<ValidatorTask>();
 
 var app = builder.Build();
 
+// 解决PostgreSQL类型'timestamp 没有时区'问题
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+//AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

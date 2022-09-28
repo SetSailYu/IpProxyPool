@@ -20,7 +20,7 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 获取全部代理状态
+        /// 【验证器】获取全部代理状态
         /// </summary>
         /// <returns></returns>
         public ProxiesStatusModel GetAllProxiesStatus()
@@ -29,20 +29,35 @@ namespace ProxyPool.Services
             var res = _db.Set<Proxies>().ToList();
             result.AllCount = res.Count;
             result.PassCount = res.Where(w => w.Validated == true).Count();
-            result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTime.Now).Count();
+            result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTimeNow.Local).Count();
             return result;
         }
 
         /// <summary>
-        /// 获取待验证的代理
+        /// 【验证器】获取待验证的代理
         /// </summary>
         /// <param name="maxCount">返回数量限制</param>
         /// <returns></returns>
         public List<ProxiesQueueModel> GetProxiesQueue(int maxCount)
         {
+            if (maxCount <= 0)
+            {
+                return _db.Set<Proxies>()
+                    .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0)
+                    .OrderBy(o => o.ToValidateDate)
+                    .Select(s => new ProxiesQueueModel
+                    {
+                        Id = s.Id,
+                        Ip = s.Ip,
+                        Port = s.Port,
+                        Success = false,
+                        ValidateFailedCnt = s.ValidateFailedCnt
+                    })
+                    .ToList();
+            }
             var query = _db.Set<Proxies>()
-                .Where(w => w.ToValidateDate <= DateTime.Now && w.VerifyState == 0)
-                .OrderByDescending(o => o.Validated).OrderBy(o => o.ToValidateDate)
+                .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == true)
+                .OrderBy(o => o.ToValidateDate)
                 .Select(s => new ProxiesQueueModel
                 {
                     Id = s.Id,
@@ -50,16 +65,33 @@ namespace ProxyPool.Services
                     Port = s.Port,
                     Success = false,
                     ValidateFailedCnt = s.ValidateFailedCnt
-                }).ToList();
-            if (maxCount > 0)
+                })
+                .Take(maxCount)
+                .ToList();
+            if (query.Count < maxCount)
             {
-                query = query.Take(maxCount).ToList();
+                int fCount = maxCount - query.Count;
+                var queryF = _db.Set<Proxies>()
+                .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == false)
+                .OrderBy(o => o.ToValidateDate)
+                .Select(s => new ProxiesQueueModel
+                {
+                    Id = s.Id,
+                    Ip = s.Ip,
+                    Port = s.Port,
+                    Success = false,
+                    ValidateFailedCnt = s.ValidateFailedCnt
+                })
+                .Take(fCount)
+                .ToList();
+                query.AddRange(queryF);
             }
+            
             return query;
         }
 
         /// <summary>
-        /// 更新代理的验证状态
+        /// 【验证器】更新代理的验证状态
         /// </summary>
         /// <param name="id"></param>
         /// <param name="verifyState">验证状态 （1验证中，0待验证） 默认0</param>
@@ -124,7 +156,7 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 批量删除代理
+        /// 【验证器】批量删除代理
         /// </summary>
         /// <param name="ids"></param>
         /// <returns></returns>

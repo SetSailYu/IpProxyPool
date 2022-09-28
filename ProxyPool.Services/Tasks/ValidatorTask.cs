@@ -77,21 +77,29 @@ namespace ProxyPool.Services.Tasks
                 ProxiesQueueModel model = new ProxiesQueueModel();
                 if (_deleteQue.TryDequeue(out model)) _deleteList.Add(model.Id);//加入删除记录列表
             }
-            bool success = _proxiesService.Delete(_deleteList);  //批量删除
-            if (success)
+            if (_deleteList.Count > 0)
             {
-                _verifyList.RemoveAll(r => _deleteList.Contains(r)); //批量弹出验证记录列表
-                _deleteList.Clear(); //清空临时记录列表
+                ConsoleHelper.WriteErrorLog($"开始批量删除 {_deleteList.Count} 个代理");
+                bool success = _proxiesService.Delete(_deleteList);  //批量删除
+                if (success)
+                {
+                    _verifyList.RemoveAll(r => _deleteList.Contains(r)); //批量弹出验证记录列表
+                    _deleteList.Clear(); //清空临时记录列表
+                }
             }
+            
 
             // --> 如果正在进行验证的代理足够多，那么就不着急添加新代理
             if (_verifyList.Count >= VALIDATE_THREAD_NUM * 2)
             {
+                ConsoleHelper.WriteHintLog($"====> 代理足够多 ===========>本轮结束休息5秒<=============");
                 return 5; //返回5秒间隔循环
             }
 
             // --> 从数据库中获取若干当前待验证的代理装填进线程池
-            List<ProxiesQueueModel> proxiesQueues = _proxiesService.GetProxiesQueue(VALIDATE_THREAD_NUM);
+            int num = 0;
+            List<ProxiesQueueModel> proxiesQueues = _proxiesService.GetProxiesQueue(VALIDATE_THREAD_NUM * 4);
+            ConsoleHelper.WriteSuccessLog($"======> 从数据库获取了 {proxiesQueues.Count} 个代理");
             foreach (ProxiesQueueModel proxy in proxiesQueues)
             {
                 bool join = ThreadPool.QueueUserWorkItem(new WaitCallback(VerifyThreadFun), proxy);
@@ -99,10 +107,11 @@ namespace ProxyPool.Services.Tasks
                 {
                     _verifyList.Add(proxy.Id); //加入验证记录列表
                     _proxiesService.UpdateProxyVerifyState(proxy.Id, 1);
+                    num++;  
                 }
             }
-
-            ConsoleHelper.WriteHintLog($"本轮结束休息5秒");
+            ConsoleHelper.WriteSuccessLog($"=====> 本轮添加了 {num} 个线程，共有 {_verifyList.Count} 个线程在运行");
+            ConsoleHelper.WriteHintLog($"===========>本轮结束休息5秒<=============");
             return 5; //返回5秒间隔循环
         }
 
@@ -113,6 +122,7 @@ namespace ProxyPool.Services.Tasks
         public void VerifyThreadFun(object model)
         {
             ProxiesQueueModel item = (ProxiesQueueModel)model;
+            ConsoleHelper.WriteSuccessLog($"==> 验证 {item.Ip}:{item.Port} 线程");
             Stopwatch sw = new Stopwatch();
             sw.Start();
             bool success = ValidateProxy(item.Ip, item.Port); //验证代理
@@ -146,8 +156,10 @@ namespace ProxyPool.Services.Tasks
 
             if (!string.IsNullOrEmpty(result) && result.Contains("百度搜索"))
             {
+                ConsoleHelper.WriteSuccessLog($"【验证】{host}:{port} 成功 ====>");
                 return true;
             }
+            ConsoleHelper.WriteErrorLog($"【验证】{host}:{port} 失败 ====>");
             return false;
         }
 
@@ -164,9 +176,9 @@ namespace ProxyPool.Services.Tasks
             {
                 model.Success = true;
                 model.Latency = latency;
-                model.ValidateDate = DateTime.Now;
+                model.ValidateDate = DateTimeNow.Local;
                 model.ValidateFailedCnt = 0;
-                model.ToValidateDate = DateTime.Now.AddMinutes(10); //10分钟之后继续验证
+                model.ToValidateDate = DateTimeNow.Local.AddMinutes(10); //10分钟之后继续验证
             }
             else
             {
@@ -178,8 +190,8 @@ namespace ProxyPool.Services.Tasks
                 }
                 model.Success = false;
                 model.Latency = latency;
-                model.ValidateDate = DateTime.Now;
-                model.ToValidateDate = DateTime.Now.AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
+                model.ValidateDate = DateTimeNow.Local;
+                model.ToValidateDate = DateTimeNow.Local.AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
             }
             // 加入验证结果队列
             _resultQue.Enqueue(model);

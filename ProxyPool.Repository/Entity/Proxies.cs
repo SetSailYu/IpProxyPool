@@ -50,12 +50,12 @@ namespace ProxyPool.Repository.Entity
         [Column("latency")]
         public int Latency { get; set; }
         /// <summary>
-        /// 上一次进行验证的时间
+        /// 上一次进行验证的时间（Local无时区）
         /// </summary>
         [Column("validate_date")]
         public DateTime? ValidateDate { get; set; }
         /// <summary>
-        /// 下一次进行验证的时间
+        /// 下一次进行验证的时间（Local无时区）
         /// </summary>
         [Column("to_validate_date")]
         public DateTime ToValidateDate { get; set; }
