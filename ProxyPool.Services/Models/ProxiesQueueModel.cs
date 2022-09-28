@@ -41,9 +41,5 @@ namespace ProxyPool.Services.Models
         /// 下一次进行验证的时间
         /// </summary>
         public DateTime ToValidateDate { get; set; }
-        /// <summary>
-        /// 删除 (默认false)
-        /// </summary>
-        public bool Delete { get; set; } = false;
     }
 }

@@ -12,6 +12,7 @@ namespace ProxyPool.Services
     public class ProxiesService
     {
         private readonly DB _db;
+        private static readonly Object _lockObj = new object();
 
         public ProxiesService(DB context)
         {
@@ -48,8 +49,7 @@ namespace ProxyPool.Services
                     Ip = s.Ip,
                     Port = s.Port,
                     Success = false,
-                    ValidateFailedCnt = s.ValidateFailedCnt,
-                    Delete = false
+                    ValidateFailedCnt = s.ValidateFailedCnt
                 }).ToList();
             if (maxCount > 0)
             {
@@ -66,19 +66,83 @@ namespace ProxyPool.Services
         /// <returns></returns>
         public bool UpdateProxyVerifyState(Guid id, int verifyState)
         {
-            var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == id);
-            if (proxy == null)
+            try
             {
-                //ConsoleHelper.WriteErrorLog("找不到代理，更新失败");
+                lock (_lockObj)
+                {
+                    var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == id);
+                    if (proxy == null) return false;
+
+                    proxy.VerifyState = verifyState;
+                    _db.Update(proxy);
+                    int ret = _db.SaveChanges();
+                    if (ret == 0)
+                    {
+                        //ConsoleHelper.WriteErrorLog("更新记录数为0");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
                 return false;
             }
-            proxy.VerifyState = verifyState;
-            _db.Update(proxy);
-            int ret = _db.SaveChanges();
+            return true;
+        }
 
-            if (ret == 0)
+        /// <summary>
+        /// 【验证器】结果队列专属更新代理
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public bool UpdateValidatorTaskResult(ProxiesQueueModel model)
+        {
+            try
             {
-                //ConsoleHelper.WriteErrorLog("更新记录数为0");
+                lock (_lockObj)
+                {
+                    var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == model.Id);
+                    if (proxy == null) return false;
+
+                    proxy.Validated = model.Success;
+                    proxy.Latency = model.Latency;
+                    proxy.ValidateDate = model.ValidateDate;
+                    proxy.ValidateFailedCnt = model.ValidateFailedCnt;
+                    proxy.ToValidateDate = model.ToValidateDate;
+                    proxy.VerifyState = 0; //重新设为待验证状态
+
+                    _db.Update(proxy);
+                    int ret = _db.SaveChanges();
+                    if (ret == 0) return false;
+                }
+            }
+            catch(Exception e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 批量删除代理
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public bool Delete(IEnumerable<Guid> ids)
+        {
+            try
+            {
+                lock (_lockObj)
+                {
+                    var proxy = _db.Set<Proxies>()
+                    .Where(p => ids.Contains(p.Id)).ToList();
+
+                    _db.RemoveRange(proxy);
+                    _db.SaveChanges();
+                }
+            }
+            catch(Exception e)
+            {
                 return false;
             }
             return true;

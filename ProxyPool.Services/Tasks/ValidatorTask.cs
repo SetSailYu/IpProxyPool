@@ -29,9 +29,17 @@ namespace ProxyPool.Services.Tasks
         /// </summary>
         private static ConcurrentQueue<ProxiesQueueModel> _resultQue = new ConcurrentQueue<ProxiesQueueModel>();
         /// <summary>
+        /// 删除队列
+        /// </summary>
+        private static ConcurrentQueue<ProxiesQueueModel> _deleteQue = new ConcurrentQueue<ProxiesQueueModel>();
+        /// <summary>
         /// 当前验证记录列表
         /// </summary>
         private static List<Guid> _verifyList = new List<Guid>();
+        /// <summary>
+        /// 临时记录删除列表
+        /// </summary>
+        private static List<Guid> _deleteList = new List<Guid>();
         /// <summary>
         /// 验证线程数量配置
         /// </summary>
@@ -57,12 +65,24 @@ namespace ProxyPool.Services.Tasks
                 ProxiesQueueModel model = new ProxiesQueueModel();
                 if (_resultQue.TryDequeue(out model))
                 {
-                    ConsoleHelper.WriteSuccessLog($"【{model.Port}】弹出结果队列：{model.Ip}");
-                    _verifyList.Remove(model.Id);//弹出记录列表
+                    _proxiesService.UpdateValidatorTaskResult(model);  //更新代理
+                    _verifyList.Remove(model.Id);//弹出验证记录列表
                     out_cnt++;
                 }
             }
             ConsoleHelper.WriteSuccessLog($"完成了 {out_cnt} 个代理验证");
+            // --> 删除验证结果指定代理
+            while (!_deleteQue.IsEmpty)
+            {
+                ProxiesQueueModel model = new ProxiesQueueModel();
+                if (_deleteQue.TryDequeue(out model)) _deleteList.Add(model.Id);//加入删除记录列表
+            }
+            bool success = _proxiesService.Delete(_deleteList);  //批量删除
+            if (success)
+            {
+                _verifyList.RemoveAll(r => _deleteList.Contains(r)); //批量弹出验证记录列表
+                _deleteList.Clear(); //清空临时记录列表
+            }
 
             // --> 如果正在进行验证的代理足够多，那么就不着急添加新代理
             if (_verifyList.Count >= VALIDATE_THREAD_NUM * 2)
@@ -77,7 +97,7 @@ namespace ProxyPool.Services.Tasks
                 bool join = ThreadPool.QueueUserWorkItem(new WaitCallback(VerifyThreadFun), proxy);
                 if (join)
                 {
-                    _verifyList.Add(proxy.Id); //加入记录列表
+                    _verifyList.Add(proxy.Id); //加入验证记录列表
                     _proxiesService.UpdateProxyVerifyState(proxy.Id, 1);
                 }
             }
@@ -93,14 +113,12 @@ namespace ProxyPool.Services.Tasks
         public void VerifyThreadFun(object model)
         {
             ProxiesQueueModel item = (ProxiesQueueModel)model;
-
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            bool success = ValidateProxy(item.Ip, item.Port);
+            bool success = ValidateProxy(item.Ip, item.Port); //验证代理
             sw.Stop();
-            TimeSpan ts = sw.Elapsed;
-
-            _resultQue.Enqueue(Validate(item, success, Convert.ToInt32(ts.TotalMilliseconds))); //添加验证结果
+            //判断验证结果并加入队列
+            ValidateQue(item, success, Convert.ToInt32(sw.Elapsed.TotalMilliseconds));
         }
 
         /// <summary>
@@ -134,13 +152,13 @@ namespace ProxyPool.Services.Tasks
         }
 
         /// <summary>
-        /// 验证结果
+        /// 判断验证结果并加入队列
         /// </summary>
         /// <param name="model"></param>
         /// <param name="success"></param>
         /// <param name="latency"></param>
         /// <returns></returns>
-        public ProxiesQueueModel Validate(ProxiesQueueModel model, bool success, int latency)
+        public void ValidateQue(ProxiesQueueModel model, bool success, int latency)
         {
             if (success)
             {
@@ -152,17 +170,19 @@ namespace ProxyPool.Services.Tasks
             }
             else
             {
+                model.ValidateFailedCnt++;
+                if (model.ValidateFailedCnt >= 6)
+                {
+                    _deleteQue.Enqueue(model); //失败太多次，加入删除队列
+                    return;
+                }
                 model.Success = false;
                 model.Latency = latency;
                 model.ValidateDate = DateTime.Now;
-                model.ValidateFailedCnt++;
                 model.ToValidateDate = DateTime.Now.AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
-                if (model.ValidateFailedCnt >= 6)
-                {
-                    model.Delete = true; //失败太多次，进行删除
-                }
             }
-            return model;
+            // 加入验证结果队列
+            _resultQue.Enqueue(model);
         }
 
 
