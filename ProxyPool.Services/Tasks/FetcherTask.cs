@@ -47,17 +47,23 @@ namespace ProxyPool.Services.Tasks
             //  将爬取到的代理放入数据库中
             //  睡眠一段时间
             ConsoleHelper.WriteSuccessLog("【爬取器】循环 ====>");
-            ProxiesStatusModel proxiesStatus = await _proxiesService.GetAllProxiesStatusAsync();
-            if (proxiesStatus.VerifyCount > 2000)
-            {
-                ConsoleHelper.WriteHintLog($"还有{proxiesStatus.VerifyCount}个代理等待验证，数量过多，跳过本次爬取");
-                return 5 * 60; //爬取器睡眠5分钟 
-            }
+            
+            //ProxiesStatusModel proxiesStatus = await _proxiesService.GetAllProxiesStatusAsync();
+            //if (proxiesStatus.VerifyCount > 2000)
+            //{
+            //    ConsoleHelper.WriteHintLog($"还有{proxiesStatus.VerifyCount}个代理等待验证，数量过多，跳过本次爬取");
+            //    return 5 * 60; //爬取器睡眠5分钟 
+            //}
 
-            List<Fetchers> fetcherList = await _fetchersService.GetAsync();
-            foreach (Fetchers fetcher in fetcherList)
+            foreach (var fetcher in FetcherManage.Web)
             {
-                await _fetchersService.GetAsync();
+                //Fetchers data = await _fetchersService.GetByNameFirstAsync(fetcher.Url);
+                //if (data == null) continue; //数据库内没有相应信息
+                //if (!data.Enable) continue; //该爬取器被禁用
+
+                await fetcher.DoFetcherAsync();
+
+
             }
 
             
@@ -65,7 +71,7 @@ namespace ProxyPool.Services.Tasks
 
 
 
-            return 2; //返回2秒间隔循环
+            return 5 * 60; //爬取器睡眠5分钟
         }
 
 

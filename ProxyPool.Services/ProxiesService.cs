@@ -12,7 +12,6 @@ namespace ProxyPool.Services
     public class ProxiesService
     {
         private readonly DB _db;
-        private static readonly Object _lockObj = new object();
 
         public ProxiesService(DB context)
         {

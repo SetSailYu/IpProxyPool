@@ -54,7 +54,7 @@ builder.Services.AddAutoMapper(profileAssemblies, ServiceLifetime.Singleton);
 builder.Services.AddProxyPoolCors();
 
 // 爬取器任务
-//builder.Services.AddHostedService<FetcherTask>();
+builder.Services.AddHostedService<FetcherTask>();
 // 验证器任务
 //builder.Services.AddHostedService<ValidatorTask>();
 
