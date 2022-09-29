@@ -33,7 +33,7 @@ namespace ProxyPool.Common.Base
             {
                 while (true)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(DoTask(e))); //异步延迟
+                    await Task.Delay(TimeSpan.FromSeconds(await DoTaskAsync(e))); //异步延迟
                 }
             };
         }
@@ -68,6 +68,6 @@ namespace ProxyPool.Common.Base
         /// </summary>
         /// <param name="db"></param>
         /// <returns>异步延迟间隔（秒）</returns>
-        protected abstract double DoTask(object state);
+        protected abstract Task<double> DoTaskAsync(object state);
     }
 }

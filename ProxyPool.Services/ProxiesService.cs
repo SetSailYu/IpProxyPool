@@ -20,29 +20,31 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 【验证器】获取全部代理状态
+        /// 获取全部代理状态
         /// </summary>
         /// <returns></returns>
-        public ProxiesStatusModel GetAllProxiesStatus()
+        public async Task<ProxiesStatusModel> GetAllProxiesStatusAsync()
         {
             ProxiesStatusModel result = new ProxiesStatusModel();
-            var res = _db.Set<Proxies>().ToList();
+            var res = await _db.Set<Proxies>().ToListAsync();
             result.AllCount = res.Count;
             result.PassCount = res.Where(w => w.Validated == true).Count();
             result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTimeNow.Local).Count();
             return result;
         }
 
+        #region 【验证器】
+
         /// <summary>
         /// 【验证器】获取待验证的代理
         /// </summary>
-        /// <param name="maxCount">返回数量限制</param>
+        /// <param name="maxCount">返回数量限制 (-1全部)</param>
         /// <returns></returns>
-        public List<ProxiesQueueModel> GetProxiesQueue(int maxCount)
+        public async Task<List<ProxiesQueueModel>> GetProxiesQueueAsync(int maxCount)
         {
-            if (maxCount <= 0)
+            if (maxCount < 0)
             {
-                return _db.Set<Proxies>()
+                return await _db.Set<Proxies>()
                     .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0)
                     .OrderBy(o => o.ToValidateDate)
                     .Select(s => new ProxiesQueueModel
@@ -53,9 +55,9 @@ namespace ProxyPool.Services
                         Success = false,
                         ValidateFailedCnt = s.ValidateFailedCnt
                     })
-                    .ToList();
+                    .ToListAsync();
             }
-            var query = _db.Set<Proxies>()
+            var query = await _db.Set<Proxies>()
                 .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == true)
                 .OrderBy(o => o.ToValidateDate)
                 .Select(s => new ProxiesQueueModel
@@ -67,26 +69,25 @@ namespace ProxyPool.Services
                     ValidateFailedCnt = s.ValidateFailedCnt
                 })
                 .Take(maxCount)
-                .ToList();
+                .ToListAsync();
             if (query.Count < maxCount)
             {
                 int fCount = maxCount - query.Count;
-                var queryF = _db.Set<Proxies>()
-                .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == false)
-                .OrderBy(o => o.ToValidateDate)
-                .Select(s => new ProxiesQueueModel
-                {
-                    Id = s.Id,
-                    Ip = s.Ip,
-                    Port = s.Port,
-                    Success = false,
-                    ValidateFailedCnt = s.ValidateFailedCnt
-                })
-                .Take(fCount)
-                .ToList();
+                var queryF = await _db.Set<Proxies>()
+                    .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == false)
+                    .OrderBy(o => o.ToValidateDate)
+                    .Select(s => new ProxiesQueueModel
+                    {
+                        Id = s.Id,
+                        Ip = s.Ip,
+                        Port = s.Port,
+                        Success = false,
+                        ValidateFailedCnt = s.ValidateFailedCnt
+                    })
+                    .Take(fCount)
+                    .ToListAsync();
                 query.AddRange(queryF);
             }
-            
             return query;
         }
 
@@ -96,24 +97,17 @@ namespace ProxyPool.Services
         /// <param name="id"></param>
         /// <param name="verifyState">验证状态 （1验证中，0待验证） 默认0</param>
         /// <returns></returns>
-        public bool UpdateProxyVerifyState(Guid id, int verifyState)
+        public async Task<bool> UpdateProxyVerifyStateAsync(Guid id, int verifyState)
         {
             try
             {
-                lock (_lockObj)
-                {
-                    var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == id);
-                    if (proxy == null) return false;
+                var proxy = await _db.Set<Proxies>().FirstOrDefaultAsync(f => f.Id == id);
+                if (proxy == null) return false;
 
-                    proxy.VerifyState = verifyState;
-                    _db.Update(proxy);
-                    int ret = _db.SaveChanges();
-                    if (ret == 0)
-                    {
-                        //ConsoleHelper.WriteErrorLog("更新记录数为0");
-                        return false;
-                    }
-                }
+                proxy.VerifyState = verifyState;
+                _db.Update(proxy);
+                int ret = await _db.SaveChangesAsync();
+                if (ret == 0) return false;
             }
             catch (Exception e)
             {
@@ -127,26 +121,23 @@ namespace ProxyPool.Services
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool UpdateValidatorTaskResult(ProxiesQueueModel model)
+        public async Task<bool> UpdateValidatorTaskResultAsync(ProxiesQueueModel model)
         {
             try
             {
-                lock (_lockObj)
-                {
-                    var proxy = _db.Set<Proxies>().FirstOrDefault(f => f.Id == model.Id);
-                    if (proxy == null) return false;
+                var proxy = await _db.Set<Proxies>().FirstOrDefaultAsync(f => f.Id == model.Id);
+                if (proxy == null) return false;
 
-                    proxy.Validated = model.Success;
-                    proxy.Latency = model.Latency;
-                    proxy.ValidateDate = model.ValidateDate;
-                    proxy.ValidateFailedCnt = model.ValidateFailedCnt;
-                    proxy.ToValidateDate = model.ToValidateDate;
-                    proxy.VerifyState = 0; //重新设为待验证状态
+                proxy.Validated = model.Success;
+                proxy.Latency = model.Latency;
+                proxy.ValidateDate = model.ValidateDate;
+                proxy.ValidateFailedCnt = model.ValidateFailedCnt;
+                proxy.ToValidateDate = model.ToValidateDate;
+                proxy.VerifyState = 0; //重新设为待验证状态
 
-                    _db.Update(proxy);
-                    int ret = _db.SaveChanges();
-                    if (ret == 0) return false;
-                }
+                _db.Update(proxy);
+                int ret = await _db.SaveChangesAsync();
+                if (ret == 0) return false;
             }
             catch(Exception e)
             {
@@ -160,18 +151,15 @@ namespace ProxyPool.Services
         /// </summary>
         /// <param name="ids"></param>
         /// <returns></returns>
-        public bool Delete(IEnumerable<Guid> ids)
+        public async Task<bool> DeleteAsync(IEnumerable<Guid> ids)
         {
             try
             {
-                lock (_lockObj)
-                {
-                    var proxy = _db.Set<Proxies>()
-                    .Where(p => ids.Contains(p.Id)).ToList();
+                var proxy = await _db.Set<Proxies>()
+                    .Where(p => ids.Contains(p.Id)).ToListAsync();
 
-                    _db.RemoveRange(proxy);
-                    _db.SaveChanges();
-                }
+                _db.RemoveRange(proxy);
+                await _db.SaveChangesAsync();
             }
             catch(Exception e)
             {
@@ -180,6 +168,7 @@ namespace ProxyPool.Services
             return true;
         }
 
+        #endregion 【验证器】
 
         /// <summary>
         /// 获取全部代理列表

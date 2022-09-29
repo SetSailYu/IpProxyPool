@@ -16,7 +16,7 @@ namespace ProxyPool.Services.Utilities
         /// <summary>
         /// 指定代理IP  127.0.0.1:8080
         /// </summary>
-        public WebProxy AssignProxyIp { get; set; }
+        public string AssignProxyIp { get; set; } = "";
 
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ProxyPool.Common;
 using ProxyPool.Common.Helpers;
 using ProxyPool.Repository.Base;
@@ -55,7 +56,7 @@ builder.Services.AddProxyPoolCors();
 // 爬取器任务
 //builder.Services.AddHostedService<FetcherTask>();
 // 验证器任务
-builder.Services.AddHostedService<ValidatorTask>();
+//builder.Services.AddHostedService<ValidatorTask>();
 
 //ConsoleHelper.WriteSuccessLog("Task ========>");
 
@@ -75,7 +76,11 @@ var app = builder.Build();
 
 // 解决PostgreSQL类型'timestamp 没有时区'问题
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-//AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
+// 配置线程池大小
+ThreadPool.SetMinThreads(10, 10);
+ThreadPool.SetMaxThreads(100, 100); //最高并发数
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

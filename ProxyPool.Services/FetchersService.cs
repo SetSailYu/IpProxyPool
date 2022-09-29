@@ -22,22 +22,12 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
-        /// 获取首个爬取器
+        /// 根据名称获取爬取器
         /// </summary>
         /// <returns></returns>
-        public Fetchers GetFirst()
+        public async Task<Fetchers> GetByNameFirstAsync(string name)
         {
-            var result = _db.Set<Fetchers>().FirstOrDefault();
-            return result;
-        }
-
-        /// <summary>
-        /// 获取全部爬取器列表
-        /// </summary>
-        /// <returns></returns>
-        public List<Fetchers> GetList()
-        {
-            var result = _db.Set<Fetchers>().ToList();
+            var result = await _db.Set<Fetchers>().FirstOrDefaultAsync(f => f.Name == name);
             return result;
         }
 

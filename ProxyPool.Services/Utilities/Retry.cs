@@ -17,7 +17,7 @@ namespace ProxyPool.Services.Utilities
         /// <param name="fun">传进的委托（方法）</param>
         /// <param name="settings"></param>
         /// <returns></returns>
-        public static T Function<T>(Func<WebProxy, T> fun, RetrySettings settings) where T : class
+        public static T Function<T>(Func<string, T> fun, RetrySettings settings) where T : class
         {
             var numberOfAttempts = 0;
             //循环settings里面的MaximumNumberOfAttempts次数

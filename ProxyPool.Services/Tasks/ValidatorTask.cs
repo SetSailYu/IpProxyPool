@@ -22,7 +22,6 @@ namespace ProxyPool.Services.Tasks
     public class ValidatorTask : InitBackgroundTask
     {
         private readonly DB _db;
-        private readonly FetchersService _fetchersService;
         private readonly ProxiesService _proxiesService;
         /// <summary>
         /// 验证结果队列
@@ -49,15 +48,19 @@ namespace ProxyPool.Services.Tasks
         {
             var scope = scopeFactory.CreateScope();
             _db = scope.ServiceProvider.GetRequiredService<DB>();
-            _fetchersService = new FetchersService(_db);
             _proxiesService = new ProxiesService(_db);
             ThreadPool.SetMinThreads(2, 2);
             ThreadPool.SetMaxThreads(100, 100); //最高并发数
         }
-        protected override double DoTask(object state)
-        {
-            ConsoleHelper.WriteSuccessLog($"【验证器】循环 ====>");
 
+        /// <summary>
+        /// 任务体
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        protected override async Task<double> DoTaskAsync(object state)
+        {
+            ConsoleHelper.WriteHintLog($"【验证器】循环 ====>");
             // --> 检查验证线程是否返回了代理的验证结果
             int out_cnt = 0;
             while (!_resultQue.IsEmpty)
@@ -65,7 +68,7 @@ namespace ProxyPool.Services.Tasks
                 ProxiesQueueModel model = new ProxiesQueueModel();
                 if (_resultQue.TryDequeue(out model))
                 {
-                    _proxiesService.UpdateValidatorTaskResult(model);  //更新代理
+                    await _proxiesService.UpdateValidatorTaskResultAsync(model);  //更新代理
                     _verifyList.Remove(model.Id);//弹出验证记录列表
                     out_cnt++;
                 }
@@ -79,39 +82,32 @@ namespace ProxyPool.Services.Tasks
             }
             if (_deleteList.Count > 0)
             {
-                ConsoleHelper.WriteErrorLog($"开始批量删除 {_deleteList.Count} 个代理");
-                bool success = _proxiesService.Delete(_deleteList);  //批量删除
+                bool success = await _proxiesService.DeleteAsync(_deleteList);  //批量删除
                 if (success)
                 {
                     _verifyList.RemoveAll(r => _deleteList.Contains(r)); //批量弹出验证记录列表
                     _deleteList.Clear(); //清空临时记录列表
                 }
             }
-            
-
             // --> 如果正在进行验证的代理足够多，那么就不着急添加新代理
             if (_verifyList.Count >= VALIDATE_THREAD_NUM * 2)
             {
-                ConsoleHelper.WriteHintLog($"====> 代理足够多 ===========>本轮结束休息5秒<=============");
                 return 5; //返回5秒间隔循环
             }
-
             // --> 从数据库中获取若干当前待验证的代理装填进线程池
             int num = 0;
-            List<ProxiesQueueModel> proxiesQueues = _proxiesService.GetProxiesQueue(VALIDATE_THREAD_NUM * 4);
-            ConsoleHelper.WriteSuccessLog($"======> 从数据库获取了 {proxiesQueues.Count} 个代理");
+            List<ProxiesQueueModel> proxiesQueues = await _proxiesService.GetProxiesQueueAsync(VALIDATE_THREAD_NUM * 4);
             foreach (ProxiesQueueModel proxy in proxiesQueues)
             {
                 bool join = ThreadPool.QueueUserWorkItem(new WaitCallback(VerifyThreadFun), proxy);
                 if (join)
                 {
                     _verifyList.Add(proxy.Id); //加入验证记录列表
-                    _proxiesService.UpdateProxyVerifyState(proxy.Id, 1);
+                    await _proxiesService.UpdateProxyVerifyStateAsync(proxy.Id, 1); //更新为验证中状态
                     num++;  
                 }
             }
-            ConsoleHelper.WriteSuccessLog($"=====> 本轮添加了 {num} 个线程，共有 {_verifyList.Count} 个线程在运行");
-            ConsoleHelper.WriteHintLog($"===========>本轮结束休息5秒<=============");
+            ConsoleHelper.WriteHintLog($"===========>本轮结束休息5秒，添加了 {num} 个线程，共有 {_verifyList.Count} 个线程在运行");
             return 5; //返回5秒间隔循环
         }
 
@@ -142,7 +138,7 @@ namespace ProxyPool.Services.Tasks
             RetrySettings settings = new RetrySettings()
             {
                 MaximumNumberOfAttempts = 3,
-                AssignProxyIp = new WebProxy(host, port)
+                AssignProxyIp = $"{host}:{port}"
             };
             AlgorithmDTO dto = new AlgorithmDTO()
             {
