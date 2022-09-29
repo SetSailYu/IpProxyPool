@@ -31,7 +31,7 @@ namespace ProxyPool.Services.Tasks
                 {
                     var res = SpiderBase.GetStreamStr(url);
                     return res;
-                }, new RetrySettings()
+                }, new RetrySettings
                 {
                     MaximumNumberOfAttempts = 3
                 });

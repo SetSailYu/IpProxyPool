@@ -118,7 +118,6 @@ namespace ProxyPool.Services.Tasks
         public void VerifyThreadFun(object model)
         {
             ProxiesQueueModel item = (ProxiesQueueModel)model;
-            ConsoleHelper.WriteSuccessLog($"==> 验证 {item.Ip}:{item.Port} 线程");
             Stopwatch sw = new Stopwatch();
             sw.Start();
             bool success = ValidateProxy(item.Ip, item.Port); //验证代理
@@ -135,27 +134,21 @@ namespace ProxyPool.Services.Tasks
         /// <returns>成功true/失败false</returns>
         public bool ValidateProxy(string host, int port)
         {
-            RetrySettings settings = new RetrySettings()
+            string url = $"https://baidu.com";
+            string result = Retry.Function(proxy =>
+            {
+                var res = SpiderBase.GetStreamStr(url, proxy);
+                return res;
+            }, new RetrySettings 
             {
                 MaximumNumberOfAttempts = 3,
                 AssignProxyIp = $"{host}:{port}"
-            };
-            AlgorithmDTO dto = new AlgorithmDTO()
-            {
-                Url = $"https://baidu.com",
-            };
-            string result = Retry.Function(proxy =>
-            {
-                var res = SpiderBase.GetStreamStr(dto, proxy);
-                return res;
-            }, settings);
+            });
 
             if (!string.IsNullOrEmpty(result) && result.Contains("百度搜索"))
             {
-                ConsoleHelper.WriteSuccessLog($"【验证】{host}:{port} 成功 ====>");
                 return true;
             }
-            ConsoleHelper.WriteErrorLog($"【验证】{host}:{port} 失败 ====>");
             return false;
         }
 
