@@ -22,6 +22,8 @@ public static class ProxyPoolWebApplicationBuilderExtensions
         var configuration = builder.Configuration;
         AppSettingsConfig.Configure(configuration);
 
+        // 支持提供 Windows-1252, Shift-JIS,  GB2312 三种编码
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         return builder;
     }

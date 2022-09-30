@@ -5,6 +5,7 @@ using ProxyPool.Common.Helpers;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Enum;
 using ProxyPool.Services.Tasks;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 

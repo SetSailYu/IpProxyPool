@@ -6,13 +6,35 @@ using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ProxyPool.Services.Utilities
 {
+    /// <summary>
+    /// 基础网络
+    /// </summary>
     public static class SpiderBase
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        public static HttpClient client { get; } = new HttpClient(new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,// 默认为true,是否允许重定向
+            //MaxAutomaticRedirections = 50,//最多重定向几次,默认50次
+            //MaxConnectionsPerServer = 100,//连接池中统一TcpServer的最大连接数
+            //默认是None，即不压缩
+            AutomaticDecompression = DecompressionMethods.GZip,
+            UseCookies = false// 是否自动处理cookie
+        });
+        
+        /// <summary>
+        /// 异步网络
+        /// </summary>
+        public static SpiderAsync Async = new SpiderAsync(client);
+
         /// <summary>
         /// 请求
         /// </summary>
@@ -65,7 +87,6 @@ namespace ProxyPool.Services.Utilities
         /// <returns></returns>
         public static string GetStr(AlgorithmDTO dto, string proxyIp = "", int timeOut = 10000, bool zip = true)
         {
-
             var request = (HttpWebRequest)WebRequest.Create(dto.Url);
             request.Method = "GET";
             request.Timeout = timeOut;
@@ -176,6 +197,50 @@ namespace ProxyPool.Services.Utilities
             return proxy;
         }
 
-
     }
+
+    /// <summary>
+    /// 异步网络
+    /// </summary>
+    public class SpiderAsync
+    {
+        public HttpClient _client { get; }
+        public SpiderAsync(HttpClient client)
+        {
+            _client = client;
+        }
+        /// <summary>
+        /// Get请求Html （特定格式GB2312结果请求方法）
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="proxyIp"></param>
+        /// <param name="referrer"></param>
+        /// <param name="timeOut"></param>
+        /// <param name="zip"></param>
+        /// <returns></returns>
+        public async Task<string> GetHttpHtmlByGB2312Async(string url = "")
+        {
+            try
+            {
+                var result = await _client.GetByteArrayAsync(url);
+
+                
+                var res = System.Web.HttpUtility.UrlDecode(result, Encoding.GetEncoding("GB2312"));
+                return res;
+            }
+            catch (WebException ex)
+            {
+                return ex.Message;
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        
+    }
+
+
 }
