@@ -44,20 +44,16 @@ namespace ProxyPool.Services.Tasks
                     int page = htmlPage[htmlPage.Count - 2].InnerText.ToInt32();
                     maxPage = page == 0 ? maxPage : page;
                 }
-
+                //批量获取代理
                 for(int i = 2; i <= maxPage; i++)
                 {
                     htmlDoc = new HtmlDocument();
                     string html = await GetHtml($"http://www.66ip.cn/{i}.html");
+                    if (string.IsNullOrEmpty(html)) continue;
+
                     htmlDoc.LoadHtml(html);//加载html
                     GetAddProxy(htmlDoc, result);
                 }
-
-
-
-
-
-
             }
             catch(Exception e)
             {

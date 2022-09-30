@@ -47,23 +47,27 @@ namespace ProxyPool.Services.Tasks
             //  将爬取到的代理放入数据库中
             //  睡眠一段时间
             ConsoleHelper.WriteSuccessLog("【爬取器】循环 ====>");
-            
-            //ProxiesStatusModel proxiesStatus = await _proxiesService.GetAllProxiesStatusAsync();
-            //if (proxiesStatus.VerifyCount > 2000)
-            //{
-            //    ConsoleHelper.WriteHintLog($"还有{proxiesStatus.VerifyCount}个代理等待验证，数量过多，跳过本次爬取");
-            //    return 5 * 60; //爬取器睡眠5分钟 
-            //}
 
-            foreach (var fetcher in FetcherManage.Web)
+            ProxiesStatusModel proxiesStatus = await _proxiesService.GetAllProxiesStatusAsync();
+            if (proxiesStatus.VerifyCount > 2000)
             {
-                //Fetchers data = await _fetchersService.GetByNameFirstAsync(fetcher.Url);
-                //if (data == null) continue; //数据库内没有相应信息
-                //if (!data.Enable) continue; //该爬取器被禁用
-
-                await fetcher.DoFetcherAsync();
+                ConsoleHelper.WriteHintLog($"还有{proxiesStatus.VerifyCount}个代理等待验证，数量过多，跳过本次爬取");
+                return 5 * 60; //爬取器睡眠5分钟 
+            }
 
 
+            foreach (IBaseFetcher fetcher in FetcherManage.Web)
+            {
+                Fetchers data = await _fetchersService.GetByNameFirstAsync(fetcher.Url);
+                if (data == null) continue; //数据库内没有相应信息
+                if (!data.Enable) continue; //该爬取器被禁用
+
+                List<ProxiesFetcherModel> result = await fetcher.DoFetcherAsync();
+
+                // ===== 批量写入代理表
+
+                //更新爬取器状态
+                await _fetchersService.UpdateFetcherStateAsync(data.Id, data.SumProxiesCnt + result.Count, result.Count);
             }
 
             
@@ -73,6 +77,22 @@ namespace ProxyPool.Services.Tasks
 
             return 5 * 60; //爬取器睡眠5分钟
         }
+
+        /// <summary>
+        /// 爬取器线程参数Model
+        /// </summary>
+        public class FetcherThreadParamModel
+        {
+            /// <summary>
+            /// 数据库爬取器数据
+            /// </summary>
+            public Fetchers Data { get; set; }
+            /// <summary>
+            /// 爬取器实体接口
+            /// </summary>
+            public IBaseFetcher Fetcher { get; set; }
+        }
+
 
 
 

@@ -75,5 +75,36 @@ namespace ProxyPool.Services
             return result;
         }
 
+
+        /// <summary>
+        /// 【爬取器】更新爬取器的状态
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="totalSum">总数</param>
+        /// <param name="lastSum">当前爬取数</param>
+        /// <returns></returns>
+        public async Task<bool> UpdateFetcherStateAsync(Guid id, int totalSum, int lastSum)
+        {
+            try
+            {
+                var data = await _db.Set<Fetchers>().FirstOrDefaultAsync(f => f.Id == id);
+                if (data == null) return false;
+
+                data.SumProxiesCnt = totalSum;
+                data.LastProxiesCnt = lastSum;
+                data.LastFetchDate = DateTimeNow.Local;
+
+                _db.Update(data);
+                int ret = await _db.SaveChangesAsync();
+                if (ret == 0) return false;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+
     }
 }

@@ -27,6 +27,10 @@ namespace ProxyPool.Services.Tasks
     public interface IBaseFetcher
     {
         public string Url { get; set; }
+        /// <summary>
+        /// 爬取指定网站代理
+        /// </summary>
+        /// <returns></returns>
         public Task<List<ProxiesFetcherModel>> DoFetcherAsync();
     }
 
