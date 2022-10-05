@@ -48,7 +48,7 @@ namespace ProxyPool.Repository.Entity
         /// 延迟(单位毫秒)，表示上次验证所用的时间，越小则代理质量越好
         /// </summary>
         [Column("latency")]
-        public int Latency { get; set; }
+        public int Latency { get; set; } = -1;
         /// <summary>
         /// 上一次进行验证的时间（Local无时区）
         /// </summary>

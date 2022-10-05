@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProxyPool.Common;
+using ProxyPool.Common.Components.DependencyInjection;
 using ProxyPool.Repository.Base;
 using ProxyPool.Repository.Entity;
 using ProxyPool.Services.Models;
@@ -16,6 +17,28 @@ namespace ProxyPool.Services
         public ProxiesService(DB context)
         {
             _db = context;
+        }
+
+        /// <summary>
+        /// 随机获取一个http协议代理
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Proxies> GetRandomHttp()
+        {
+            var query = await _db.Set<Proxies>().Where(w => w.Validated == true && w.Protocol.Contains("http"))
+                .ToListAsync();
+            var res = query.OrderBy(o => Guid.NewGuid()).FirstOrDefault();
+            return res;
+        }
+
+        /// <summary>
+        /// 获取全部代理状态
+        /// </summary>
+        /// <returns></returns>
+        public async Task<int> GetAllTrueSum()
+        {
+            var res = await _db.Set<Proxies>().Where(w => w.Validated == true).ToListAsync();
+            return res.Count;
         }
 
         /// <summary>
@@ -211,6 +234,33 @@ namespace ProxyPool.Services
             result.CountTotalPage();
 
             return result;
+        }
+
+        /// <summary>
+        /// 【爬取器】添加爬取的代理
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public async Task<int> AddAsync(ProxiesFetcherModel model)
+        {
+            if (await _db.Set<Proxies>().AnyAsync(a => a.Ip == model.Ip && a.Port == model.Port))
+            {
+                return 0;
+            }
+            await _db.AddAsync(new Proxies()
+            {
+                Id = Guid.NewGuid(),
+                FetcherName = model.FetcherName,
+                Protocol = model.Protocol,
+                Ip = model.Ip,
+                Port = model.Port,
+                Location = model.Location,
+                Validated = false,
+                ToValidateDate = DateTimeNow.Local,
+                ValidateFailedCnt = 0,
+                VerifyState = 0
+            });
+            return await _db.SaveChangesAsync();
         }
 
     }

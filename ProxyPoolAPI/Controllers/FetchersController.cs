@@ -9,7 +9,7 @@ using System.ComponentModel.Design;
 namespace ProxyPoolAPI.Controllers
 {
     /// <summary>
-    /// 抓取器
+    /// 抓取器 
     /// </summary>
     [Route("api/[controller]/[action]")]
     [ApiController]
@@ -24,7 +24,7 @@ namespace ProxyPoolAPI.Controllers
         ///// <summary>
         ///// 抓取器测试
         ///// </summary>
-        ///// <returns></returns>
+        ///// <returns></returns>   
         //[HttpGet]
         //public JsonResult Get()
         //{

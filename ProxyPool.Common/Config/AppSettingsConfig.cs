@@ -85,5 +85,13 @@ namespace ProxyPool.Common.Config
             public static string ConnectionString => Configuration["Redis:ConnectionString"];
             public static string Instance => Configuration["Redis:Instance"] ?? "Default";
         }
+
+        /// <summary>
+        /// ConnectionStrings 配置
+        /// </summary>
+        public static class ConnectionStrings
+        {
+            public static string PostgreSql => Configuration["ConnectionStrings:PostgreSql"];
+        }
     }
 }

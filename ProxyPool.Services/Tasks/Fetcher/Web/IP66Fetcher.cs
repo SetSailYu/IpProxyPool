@@ -30,6 +30,7 @@ namespace ProxyPool.Services.Tasks
             int maxPage = 10; 
             try
             {
+                ConsoleHelper.WriteHintLog($"【爬取器】开始爬取 {Url} ====>");
                 string indexHtml = await GetHtml("http://www.66ip.cn/index.html");
                 if (string.IsNullOrEmpty(indexHtml)) return result;
 
@@ -54,6 +55,7 @@ namespace ProxyPool.Services.Tasks
                     htmlDoc.LoadHtml(html);//加载html
                     GetAddProxy(htmlDoc, result);
                 }
+                ConsoleHelper.WriteSuccessLog($"【爬取器】{Url} 本次爬取 {result.Count} 个代理 <=====");
             }
             catch(Exception e)
             {
@@ -106,4 +108,6 @@ namespace ProxyPool.Services.Tasks
         }
 
     }
+
+
 }

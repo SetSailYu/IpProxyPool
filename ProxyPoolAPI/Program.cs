@@ -57,21 +57,7 @@ builder.Services.AddProxyPoolCors();
 // 爬取器任务
 builder.Services.AddHostedService<FetcherTask>();
 // 验证器任务
-//builder.Services.AddHostedService<ValidatorTask>();
-
-//ConsoleHelper.WriteSuccessLog("Task ========>");
-
-//List<ITaskService> services = new List<ITaskService>()
-//{
-//    new FetcherTaskService(builder.Services.BuildServiceProvider().GetService<DB>())
-//};
-
-//foreach (var serv in services)
-//{
-//    System.Threading.Tasks.Task.Run(serv.Execute);
-//}
-
-//ConsoleHelper.WriteSuccessLog("Build ========>");
+builder.Services.AddHostedService<ValidatorTask>();
 
 var app = builder.Build();
 
