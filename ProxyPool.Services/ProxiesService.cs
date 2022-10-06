@@ -20,6 +20,18 @@ namespace ProxyPool.Services
         }
 
         /// <summary>
+        /// 随机获取一个代理
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Proxies> GetRandom()
+        {
+            var query = await _db.Set<Proxies>().Where(w => w.Validated == true)
+                .ToListAsync();
+            var res = query.OrderBy(o => Guid.NewGuid()).FirstOrDefault();
+            return res;
+        }
+
+        /// <summary>
         /// 随机获取一个http协议代理
         /// </summary>
         /// <returns></returns>

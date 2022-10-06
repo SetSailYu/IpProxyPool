@@ -79,13 +79,7 @@ namespace ProxyPool.Services.Tasks
                 Fetchers data = await _fetchersService.GetByNameFirstAsync(fetcher.Url);
                 if (data == null) continue; //数据库内没有相应信息
                 if (!data.Enable) continue; //该爬取器被禁用
-
-                ////加入线程池
-                //bool join = ThreadPool.QueueUserWorkItem(new WaitCallback(FetcherThreadFun), new FetcherThreadParamModel
-                //{
-                //    Data = data,
-                //    Fetcher = fetcher
-                //});
+                //避免同一爬取器
                 if (_fetcherQue.Any(a => a.Url == fetcher.Url))
                 {
                     ConsoleHelper.WriteHintLog($"【爬取器】{fetcher.Url} 正在运行中");
@@ -128,7 +122,7 @@ namespace ProxyPool.Services.Tasks
             }
             //更新爬取器状态
             await _fetchersService.UpdateFetcherStateAsync(model.Data.Id, model.Data.SumProxiesCnt + count, count);
-            ConsoleHelper.WriteSuccessLog($"【爬取器】{model.Data.Name} 新增 {count} 个代理 <=====");
+            ConsoleHelper.WriteSuccessLog($"【爬取器】========> {model.Data.Name} 新增 {count} 个代理 <=====");
 
             return count;
         }

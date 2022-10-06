@@ -17,7 +17,9 @@ namespace ProxyPool.Services.Tasks
         /// </summary>
         public static List<IBaseFetcher> Web { get;} = new List<IBaseFetcher>()
         {
-            new IP66Fetcher() { Url = "www.66ip.cn" }
+            new IP66Fetcher() { Url = "www.66ip.cn" },
+            new UuProxyFetcher() { Url = "uu-proxy.com" },
+            new KuaidailiFetcher() { Url = "www.kuaidaili.com" }
         };
     }
 

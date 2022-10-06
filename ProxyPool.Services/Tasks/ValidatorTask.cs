@@ -111,7 +111,7 @@ namespace ProxyPool.Services.Tasks
             }
             // --> 从数据库中获取若干当前待验证的代理装填进线程池
             int num = 0;
-            List<ProxiesQueueModel> proxiesQueues = await _proxiesService.GetProxiesQueueAsync(VALIDATE_THREAD_NUM * 2);
+            List<ProxiesQueueModel> proxiesQueues = await _proxiesService.GetProxiesQueueAsync(VALIDATE_THREAD_NUM * 4);
             ConsoleHelper.WriteSuccessLog($"【验证器】proxiesQueues SQL待验证的代理 {proxiesQueues.Count} ");
             foreach (ProxiesQueueModel proxy in proxiesQueues)
             {

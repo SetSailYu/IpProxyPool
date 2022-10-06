@@ -30,5 +30,27 @@ namespace ProxyPoolAPI.Controllers
             return AppResult.Status200OK(data: data);
         }
 
+        /// <summary>
+        /// 随机获取一个http协议代理
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<AppResult> GetRandomHttp()
+        {
+            var data = await _service.GetRandomHttp();
+            return AppResult.Status200OK(data: data);
+        }
+
+        /// <summary>
+        /// 随机获取一个任意协议代理
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<AppResult> GetRandom()
+        {
+            var data = await _service.GetRandom();
+            return AppResult.Status200OK(data: data);
+        }
+
     }
 }

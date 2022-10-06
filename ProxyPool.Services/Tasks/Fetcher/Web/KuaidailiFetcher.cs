@@ -1,5 +1,4 @@
 ﻿using HtmlAgilityPack;
-using Microsoft.Extensions.Hosting;
 using ProxyPool.Common;
 using ProxyPool.Common.Extensions;
 using ProxyPool.Services.Models;
@@ -7,16 +6,17 @@ using ProxyPool.Services.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ProxyPool.Services.Tasks
 {
     /// <summary>
-    /// www.66ip.cn  
+    /// https://www.kuaidaili.com/free/inha/  高匿
+    /// https://www.kuaidaili.com/free/intr/  透明
     /// </summary>
-    public class IP66Fetcher : IBaseFetcher
+    public class KuaidailiFetcher : IBaseFetcher
     {
         public string Url { get; set; }
 
@@ -27,37 +27,36 @@ namespace ProxyPool.Services.Tasks
         public async Task<List<ProxiesFetcherModel>> DoFetcherAsync()
         {
             List<ProxiesFetcherModel> result = new List<ProxiesFetcherModel>();
-            int maxPage = 10; 
+            int maxPage = 50;
             try
             {
                 ConsoleHelper.WriteHintLog($"【爬取器】开始爬取 {Url} ====>");
-                string indexHtml = await GetHtml("http://www.66ip.cn/index.html");
-                if (string.IsNullOrEmpty(indexHtml)) return result;
-
-                var htmlDoc = new HtmlDocument();
-                htmlDoc.LoadHtml(indexHtml);//加载html
-                //获取首页的代理
-                GetAddProxy(htmlDoc, result);
-                //获取最大页数
-                var htmlPage = htmlDoc.DocumentNode.SelectNodes("//div[@id = 'PageList']/a");
-                if (htmlPage != null && htmlPage.Count > 1)
-                {
-                    int page = htmlPage[htmlPage.Count - 2].InnerText.ToInt32();
-                    maxPage = page == 0 ? maxPage : page;
-                }
                 //批量获取代理
-                for(int i = 2; i <= maxPage; i++)
+                for (int i = 1; i <= maxPage; i++)   // 高匿
                 {
-                    htmlDoc = new HtmlDocument();
-                    string html = await GetHtml($"http://www.66ip.cn/{i}.html");
+                    var htmlDoc = new HtmlDocument();
+                    string html = GetHtml($"https://www.kuaidaili.com/free/inha/{i}");
                     if (string.IsNullOrEmpty(html)) continue;
-
+                    if (!html.Contains("最后验证时间")) continue;
+                    html = Regex.Replace(html, @"[\n\r]", "");
                     htmlDoc.LoadHtml(html);//加载html
                     GetAddProxy(htmlDoc, result);
+                    Thread.Sleep(1);
+                }
+                for (int i = 1; i <= maxPage; i++)  // 透明
+                {
+                    var htmlDoc = new HtmlDocument();
+                    string html = GetHtml($"https://www.kuaidaili.com/free/intr/{i}");
+                    if (string.IsNullOrEmpty(html)) continue;
+                    if (!html.Contains("最后验证时间")) continue;
+                    html = Regex.Replace(html, @"[\n\r]", "");
+                    htmlDoc.LoadHtml(html);//加载html
+                    GetAddProxy(htmlDoc, result);
+                    Thread.Sleep(1);
                 }
                 ConsoleHelper.WriteSuccessLog($"【爬取器】{Url} 本次爬取 {result.Count} 个代理 <=====");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 ConsoleHelper.WriteErrorLog($"Error: {e.Message}");
             }
@@ -73,21 +72,20 @@ namespace ProxyPool.Services.Tasks
         /// <returns></returns>
         private void GetAddProxy(HtmlDocument htmlDoc, List<ProxiesFetcherModel> result)
         {
-            //获取首页的代理
-            var htmlTr = htmlDoc.DocumentNode.SelectNodes("//div[@id = 'main']/div/div/div/table/tr");
+            //获取代理
+            var htmlTr = htmlDoc.DocumentNode.SelectNodes("//div[@id = 'list']/table/tbody/tr");
             if (htmlTr != null)
             {
                 foreach (var node in htmlTr)
                 {
-                    if (node.InnerText.Contains("ip")) continue;
                     HtmlNodeCollection CNodes = node.ChildNodes;
                     result.Add(new ProxiesFetcherModel
                     {
                         FetcherName = this.Url,
-                        Protocol = "http",
-                        Ip = CNodes[0].InnerText,
-                        Port = CNodes[1].InnerText.ToInt32(),
-                        Location = CNodes[2].InnerText
+                        Protocol = CNodes[7].InnerText.ToLower(),  //默认小写
+                        Ip = CNodes[1].InnerText,
+                        Port = CNodes[3].InnerText.ToInt32(),
+                        Location = CNodes[9].InnerText
                     });
                 }
             }
@@ -98,19 +96,18 @@ namespace ProxyPool.Services.Tasks
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        private async Task<string> GetHtml(string url)
+        private string GetHtml(string url)
         {
-            var result = await Retry.Async.FunctionAsync(async proxy =>
+            return Retry.Function(proxy =>
             {
-                return await SpiderBase.Async.GetHttpHtmlByGB2312Async(url);
+                var res = SpiderBase.GetStreamStr(url);
+                return res;
             }, new RetrySettings
             {
                 MaximumNumberOfAttempts = 3
             });
-            return result.Result;
         }
 
+
     }
-
-
 }
