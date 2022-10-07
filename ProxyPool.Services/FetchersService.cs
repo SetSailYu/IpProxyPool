@@ -92,7 +92,7 @@ namespace ProxyPool.Services
 
                 data.SumProxiesCnt = totalSum;
                 data.LastProxiesCnt = lastSum;
-                data.LastFetchDate = DateTimeNow.Local;
+                data.LastFetchDate = DateTime.Now.SetKindLocal();
 
                 _db.Update(data);
                 int ret = await _db.SaveChangesAsync();

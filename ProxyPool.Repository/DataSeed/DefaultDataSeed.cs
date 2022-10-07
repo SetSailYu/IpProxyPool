@@ -26,7 +26,7 @@ namespace ProxyPool.Repository.DataSeed
                     Enable = true,
                     SumProxiesCnt = 1,
                     LastProxiesCnt = 1,
-                    LastFetchDate = DateTimeNow.Local
+                    LastFetchDate = DateTime.Now.SetKindLocal()
                 },
                 new Fetchers()
                 {
@@ -35,7 +35,7 @@ namespace ProxyPool.Repository.DataSeed
                     Enable = true,
                     SumProxiesCnt = 0,
                     LastProxiesCnt = 0,
-                    LastFetchDate = DateTimeNow.Local
+                    LastFetchDate = DateTime.Now.SetKindLocal()
                 },
                 new Fetchers()
                 {
@@ -44,7 +44,7 @@ namespace ProxyPool.Repository.DataSeed
                     Enable = false,
                     SumProxiesCnt = 3,
                     LastProxiesCnt = 3,
-                    LastFetchDate = DateTimeNow.Local
+                    LastFetchDate = DateTime.Now.SetKindLocal()
                 },
             });
 
@@ -61,8 +61,8 @@ namespace ProxyPool.Repository.DataSeed
                     Location = "福州",
                     Validated = true,
                     Latency = 234,
-                    ValidateDate = DateTimeNow.Local,
-                    ToValidateDate = DateTimeNow.Local.AddMinutes(5),
+                    ValidateDate = DateTime.Now.SetKindLocal(),
+                    ToValidateDate = DateTime.Now.SetKindLocal().AddMinutes(5),
                     ValidateFailedCnt = 3,
                 },
             });

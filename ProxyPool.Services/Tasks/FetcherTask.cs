@@ -71,7 +71,7 @@ namespace ProxyPool.Services.Tasks
             if (proxiesStatus.VerifyCount > 2000)
             {
                 ConsoleHelper.WriteHintLog($"【爬取器】还有{proxiesStatus.VerifyCount}个代理等待验证，数量过多，跳过本次爬取");
-                return 5 * 60; //爬取器睡眠5分钟 
+                return 3 * 60; //爬取器睡眠3分钟 
             }
 
             foreach (IBaseFetcher fetcher in FetcherManage.Web)
@@ -100,7 +100,7 @@ namespace ProxyPool.Services.Tasks
                 ConsoleHelper.WriteHintLog($"【爬取器】{fetcher.Url} 加入线程池成功！");
             }
 
-            return 5 * 60; //爬取器睡眠5分钟
+            return 3 * 60; //爬取器睡眠3分钟
         }
 
         /// <summary>

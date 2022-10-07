@@ -21,9 +21,10 @@ namespace ProxyPoolAPI.Controllers
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
+            //DateTime time = DateTime.Now.SetKindLocal();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
-                Date = DateTimeNow.Local.AddDays(index),
+                Date = DateTime.Now.SetKindLocal().AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })

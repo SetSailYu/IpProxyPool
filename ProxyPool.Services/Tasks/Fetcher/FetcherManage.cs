@@ -19,7 +19,8 @@ namespace ProxyPool.Services.Tasks
         {
             new IP66Fetcher() { Url = "www.66ip.cn" },
             new UuProxyFetcher() { Url = "uu-proxy.com" },
-            new KuaidailiFetcher() { Url = "www.kuaidaili.com" }
+            new KuaidailiFetcher() { Url = "www.kuaidaili.com" },
+            new IP3366Fetcher() { Url = "www.ip3366.net" }
         };
     }
 

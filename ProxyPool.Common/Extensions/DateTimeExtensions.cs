@@ -10,20 +10,20 @@ namespace System;
 /// 当前时间指定类型   
 /// （注：Linq查询时不可直接调用 DateTime.Now，否则无结果！！！，必须调用该结构属性或DateTimeExtensions扩展方法SetKind...()的结果）
 /// </summary>
-public readonly struct DateTimeNow
+public static class DateTimeNow
 {
     /// <summary>
     /// 系统时间
     /// </summary>
-    public static DateTime Local { get; } = DateTime.Now.SetKindLocal();
+    public static DateTime Local { get; set; } = DateTime.Now.SetKindLocal();
     /// <summary>
     /// 协调世界时(UTC)
     /// </summary>
-    public static DateTime Utc { get; } = DateTime.Now.SetKindUtc();
+    public static DateTime Utc { get; set; } = DateTime.Now.SetKindUtc();
     /// <summary>
     /// 未指定类型
     /// </summary>
-    public static DateTime Unspecified { get; } = DateTime.Now.SetKindUnspecified();
+    public static DateTime Unspecified { get; set; } = DateTime.Now.SetKindUnspecified();
 }
 
 /// <summary>

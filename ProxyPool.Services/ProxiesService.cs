@@ -63,7 +63,8 @@ namespace ProxyPool.Services
             var res = await _db.Set<Proxies>().ToListAsync();
             result.AllCount = res.Count;
             result.PassCount = res.Where(w => w.Validated == true).Count();
-            result.VerifyCount = res.Where(w => w.ToValidateDate <= DateTimeNow.Local).Count();
+            DateTime time = DateTime.Now.SetKindLocal();
+            result.VerifyCount = res.Where(w => w.ToValidateDate <= time).Count();
             return result;
         }
 
@@ -76,10 +77,11 @@ namespace ProxyPool.Services
         /// <returns></returns>
         public async Task<List<ProxiesQueueModel>> GetProxiesQueueAsync(int maxCount)
         {
+            DateTime time = DateTime.Now.SetKindLocal();
             if (maxCount < 0)
             {
                 return await _db.Set<Proxies>()
-                    .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0)
+                    .Where(w => w.ToValidateDate <= time && w.VerifyState == 0)
                     .OrderBy(o => o.ToValidateDate)
                     .Select(s => new ProxiesQueueModel
                     {
@@ -92,7 +94,7 @@ namespace ProxyPool.Services
                     .ToListAsync();
             }
             var query = await _db.Set<Proxies>()
-                .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == true)
+                .Where(w => w.ToValidateDate <= time && w.VerifyState == 0 && w.Validated == true)
                 .OrderBy(o => o.ToValidateDate)
                 .Select(s => new ProxiesQueueModel
                 {
@@ -108,7 +110,7 @@ namespace ProxyPool.Services
             {
                 int fCount = maxCount - query.Count;
                 var queryF = await _db.Set<Proxies>()
-                    .Where(w => w.ToValidateDate <= DateTimeNow.Local && w.VerifyState == 0 && w.Validated == false)
+                    .Where(w => w.ToValidateDate <= time && w.VerifyState == 0 && w.Validated == false)
                     .OrderBy(o => o.ToValidateDate)
                     .Select(s => new ProxiesQueueModel
                     {
@@ -259,6 +261,7 @@ namespace ProxyPool.Services
             {
                 return 0;
             }
+            DateTime time = DateTime.Now.SetKindLocal();
             await _db.AddAsync(new Proxies()
             {
                 Id = Guid.NewGuid(),
@@ -268,7 +271,7 @@ namespace ProxyPool.Services
                 Port = model.Port,
                 Location = model.Location,
                 Validated = false,
-                ToValidateDate = DateTimeNow.Local,
+                ToValidateDate = time,
                 ValidateFailedCnt = 0,
                 VerifyState = 0
             });

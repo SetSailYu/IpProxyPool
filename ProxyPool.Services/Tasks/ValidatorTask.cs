@@ -182,22 +182,22 @@ namespace ProxyPool.Services.Tasks
             {
                 model.Success = true;
                 model.Latency = latency;
-                model.ValidateDate = DateTimeNow.Local;
+                model.ValidateDate = DateTime.Now.SetKindLocal();
                 model.ValidateFailedCnt = 0;
-                model.ToValidateDate = DateTimeNow.Local.AddMinutes(10); //10分钟之后继续验证
+                model.ToValidateDate = DateTime.Now.SetKindLocal().AddMinutes(10); //10分钟之后继续验证
             }
             else
             {
                 model.ValidateFailedCnt++;
-                if (model.ValidateFailedCnt >= 6)
+                if (model.ValidateFailedCnt >= 3)
                 {
                     _deleteQue.Enqueue(model); //失败太多次，加入删除队列
                     return;
                 }
                 model.Success = false;
                 model.Latency = latency;
-                model.ValidateDate = DateTimeNow.Local;
-                model.ToValidateDate = DateTimeNow.Local.AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
+                model.ValidateDate = DateTime.Now.SetKindLocal();
+                model.ToValidateDate = DateTime.Now.SetKindLocal().AddMinutes(model.ValidateFailedCnt * 10); //验证失败的次数越多，距离下次验证的时间越长
             }
             // 加入验证结果队列
             _resultQue.Enqueue(model);
