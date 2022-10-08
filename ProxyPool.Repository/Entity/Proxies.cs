@@ -38,7 +38,7 @@ namespace ProxyPool.Repository.Entity
         /// 代理的位置
         /// </summary>
         [Column("location")]
-        public string Location { get; set; }
+        public string? Location { get; set; }
         /// <summary>
         /// 这个代理是否通过了验证，通过了验证表示当前代理可用
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
 using ProxyPool.Common;
 using ProxyPool.Services.Models;
 using ProxyPool.Services.Utilities;
@@ -8,46 +9,41 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProxyPool.Services.Tasks
+namespace ProxyPool.Services.Tasks.Fetcher.Web
 {
     /// <summary>
-    /// http://uu-proxy.com/api/free
+    /// https://ip.jiangxianli.com/
     /// </summary>
-    public class UuProxyFetcher : IBaseFetcher
+    public class JiangxianliFetcher : IBaseFetcher
     {
         public string Url { get; set; }
 
-        /// <summary>
-        /// 主体
-        /// </summary>
-        /// <returns></returns>
         public async Task<List<ProxiesFetcherModel>> DoFetcherAsync()
         {
             List<ProxiesFetcherModel> result = new List<ProxiesFetcherModel>();
+            int maxPage = 100;
             try
             {
                 ConsoleHelper.WriteHintLog($"【爬取器】开始爬取 {Url} ====>");
-                string strData = Spider.GetData("http://uu-proxy.com/api/free");
+                string strData = Spider.GetData("https://ip.jiangxianli.com/api/proxy_ips");
                 if (string.IsNullOrEmpty(strData)) return result;
 
-                UuProxyModel model = JsonConvert.DeserializeObject<UuProxyModel>(strData);
+                JiangxianliModel model = JsonConvert.DeserializeObject<JiangxianliModel>(strData);
                 if (model == null) return result;
-                if (model.Success && model.Free != null)
+                if (model.Msg == "成功" && model.Data != null)
                 {
-                    foreach(var item in model.Free.Proxies)
+                    foreach (var item in model.Data.Data)
                     {
                         result.Add(new ProxiesFetcherModel
                         {
                             FetcherName = this.Url,
-                            Protocol = item.Scheme,
+                            Protocol = item.Protocol,
                             Ip = item.Ip,
                             Port = item.Port,
-                            Location = item.Region
+                            Location = item.IpAddress
                         });
                     }
                 }
-                //批量获取代理
-                
                 ConsoleHelper.WriteSuccessLog($"【爬取器】{Url} 本次爬取 {result.Count} 个代理 <=====");
             }
             catch (Exception e)

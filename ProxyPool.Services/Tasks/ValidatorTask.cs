@@ -189,7 +189,7 @@ namespace ProxyPool.Services.Tasks
             else
             {
                 model.ValidateFailedCnt++;
-                if (model.ValidateFailedCnt >= 3)
+                if (model.ValidateFailedCnt >= 4)
                 {
                     _deleteQue.Enqueue(model); //失败太多次，加入删除队列
                     return;
