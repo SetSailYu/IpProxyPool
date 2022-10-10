@@ -70,11 +70,11 @@ ThreadPool.SetMinThreads(10, 10);
 ThreadPool.SetMaxThreads(100, 100); //最高并发数
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // UseCors 必须在 UseRouting 之后，UseResponseCaching、UseAuthorization 之前
 app.UseCors();
